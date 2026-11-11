@@ -21,6 +21,41 @@ const pkgName = id => nameOf(S.packages, id);
 const userName = id => nameOf(S.users, id) || id || '';
 const can = (m, a) => !!S.me && (S.me.isSystem || ((S.me.perms[m] || []).indexOf(a) > -1));
 
+/* Icon shapes from Lucide (ISC licence), embedded so the app needs no icon CDN */
+const ICONS = {
+  "layout-dashboard":"<rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"/>",
+  "building":"<path d=\"M12 10h.01\"/><path d=\"M12 14h.01\"/><path d=\"M12 6h.01\"/><path d=\"M16 10h.01\"/><path d=\"M16 14h.01\"/><path d=\"M16 6h.01\"/><path d=\"M8 10h.01\"/><path d=\"M8 14h.01\"/><path d=\"M8 6h.01\"/><path d=\"M9 22v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3\"/><rect x=\"4\" y=\"2\" width=\"16\" height=\"20\" rx=\"2\"/>",
+  "package":"<path d=\"M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z\"/><path d=\"M12 22V12\"/><polyline points=\"3.29 7 12 12 20.71 7\"/><path d=\"m7.5 4.27 9 5.15\"/>",
+  "clipboard-list":"<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/><path d=\"M12 11h4\"/><path d=\"M12 16h4\"/><path d=\"M8 11h.01\"/><path d=\"M8 16h.01\"/>",
+  "receipt":"<path d=\"M12 17V7\"/><path d=\"M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8\"/><path d=\"M4 3a1 1 0 0 1 1-1 1.3 1.3 0 0 1 .7.2l.933.6a1.3 1.3 0 0 0 1.4 0l.934-.6a1.3 1.3 0 0 1 1.4 0l.933.6a1.3 1.3 0 0 0 1.4 0l.933-.6a1.3 1.3 0 0 1 1.4 0l.934.6a1.3 1.3 0 0 0 1.4 0l.933-.6A1.3 1.3 0 0 1 19 2a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1 1.3 1.3 0 0 1-.7-.2l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.934.6a1.3 1.3 0 0 1-1.4 0l-.933-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-1.4 0l-.934-.6a1.3 1.3 0 0 0-1.4 0l-.933.6a1.3 1.3 0 0 1-.7.2 1 1 0 0 1-1-1z\"/>",
+  "circle-check-big":"<path d=\"M21.801 10A10 10 0 1 1 17 3.335\"/><path d=\"m9 11 3 3L22 4\"/>",
+  "users":"<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><path d=\"M16 3.128a4 4 0 0 1 0 7.744\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/>",
+  "wallet":"<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\"/><path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\"/>",
+  "chart-column":"<path d=\"M3 3v16a2 2 0 0 0 2 2h16\"/><path d=\"M18 17V9\"/><path d=\"M13 17V5\"/><path d=\"M8 17v-3\"/>",
+  "settings":"<path d=\"M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>",
+  "plus":"<path d=\"M5 12h14\"/><path d=\"M12 5v14\"/>",
+  "download":"<path d=\"M12 15V3\"/><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><path d=\"m7 10 5 5 5-5\"/>",
+  "printer":"<path d=\"M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2\"/><path d=\"M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6\"/><rect x=\"6\" y=\"14\" width=\"12\" height=\"8\" rx=\"1\"/>",
+  "search":"<path d=\"m21 21-4.34-4.34\"/><circle cx=\"11\" cy=\"11\" r=\"8\"/>",
+  "log-out":"<path d=\"m16 17 5-5-5-5\"/><path d=\"M21 12H9\"/><path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\"/>",
+  "key-round":"<path d=\"M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z\"/><circle cx=\"16.5\" cy=\"7.5\" r=\".5\" fill=\"currentColor\"/>",
+  "menu":"<path d=\"M4 5h16\"/><path d=\"M4 12h16\"/><path d=\"M4 19h16\"/>",
+  "x":"<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>",
+  "inbox":"<polyline points=\"22 12 16 12 14 15 10 15 8 12 2 12\"/><path d=\"M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z\"/>",
+  "trending-up":"<path d=\"M16 7h6v6\"/><path d=\"m22 7-8.5 8.5-5-5L2 17\"/>",
+  "hand-coins":"<path d=\"M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17\"/><path d=\"m7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9\"/><path d=\"m2 16 6 6\"/><circle cx=\"16\" cy=\"9\" r=\"2.9\"/><circle cx=\"6\" cy=\"5\" r=\"3\"/>",
+  "landmark":"<path d=\"M10 18v-7\"/><path d=\"M11.119 2.205a2 2 0 0 1 1.762 0l7.84 3.846A.5.5 0 0 1 20.5 7h-17a.5.5 0 0 1-.22-.949z\"/><path d=\"M14 18v-7\"/><path d=\"M18 18v-7\"/><path d=\"M3 22h18\"/><path d=\"M6 18v-7\"/>",
+  "clock":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 6v6l4 2\"/>",
+  "hard-hat":"<path d=\"M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5\"/><path d=\"M14 6a6 6 0 0 1 6 6v3\"/><path d=\"M4 15v-3a6 6 0 0 1 6-6\"/><rect x=\"2\" y=\"15\" width=\"20\" height=\"4\" rx=\"1\"/>",
+  "shield-check":"<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\"/><path d=\"m9 12 2 2 4-4\"/>",
+  "banknote":"<rect width=\"20\" height=\"12\" x=\"2\" y=\"6\" rx=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><path d=\"M6 12h.01M18 12h.01\"/>",
+  "scale":"<path d=\"M12 3v18\"/><path d=\"m19 8 3 8a5 5 0 0 1-6 0zV7\"/><path d=\"M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1\"/><path d=\"m5 8 3 8a5 5 0 0 1-6 0zV7\"/><path d=\"M7 21h10\"/>",
+  "chevron-left":"<path d=\"m15 18-6-6 6-6\"/>",
+  "chevron-right":"<path d=\"m9 18 6-6-6-6\"/>",
+  "alert":"<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>"
+};
+const ic = n => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
+
 function api(action, data) {
   return new Promise((resolve, reject) => {
     const cb = 'jp_' + uid();
@@ -113,10 +148,11 @@ function confirmBox(title, message, opt) {
   });
 }
 const skeleton = n => '<div class="skeleton"></div>'.repeat(n || 6);
-const errorBox = msg => `<div class="empty"><p>${esc(msg)}</p><button class="btn btn-ghost" type="button" data-retry>Retry</button></div>`;
+const emptyBox = (title, hint, icon) => `<div class="empty"><span class="empty-ic">${ic(icon || 'inbox')}</span><b>${esc(title)}</b>${hint ? `<span>${esc(hint)}</span>` : ''}</div>`;
+const errorBox = msg => `<div class="empty"><span class="empty-ic">${ic('alert')}</span><b>Could not load this page</b><span>${esc(msg)}</span><button class="btn btn-ghost" type="button" data-retry>Try again</button></div>`;
 function busy(btn, on) {
   if (!btn) return;
-  if (on) { btn.dataset.txt = btn.innerHTML; btn.innerHTML = '<span class="spinner"></span>' + btn.textContent; btn.disabled = true; }
+  if (on) { btn.dataset.txt = btn.innerHTML; btn.innerHTML = '<span class="spinner"></span>' + esc(btn.textContent); btn.disabled = true; }
   else { if (btn.dataset.txt) btn.innerHTML = btn.dataset.txt; btn.disabled = false; }
 }
 function exportCSV(name, headers, rows) {
@@ -147,7 +183,10 @@ async function doLogin(e) {
     localStorage.setItem(CONFIG.TOKEN_KEY, r.token);
     $('#loginPin').value = '';
     await startApp();
-  } catch (x) { err.textContent = x.message; }
+  } catch (x) {
+    err.textContent = x.message;
+    const card = $('#loginForm'); card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+  }
   finally { busy(btn, false); }
 }
 function logout(expired) {
@@ -160,7 +199,8 @@ function logout(expired) {
 function applyBoot(r) {
   S.me = r.me; S.cfg = r.config; S.modules = r.modules; S.packageModes = r.packageModes; S.paymentTypes = r.paymentTypes; S.adjMode = r.adjMode;
   S.project = r.project; S.locations = r.locations; S.packages = r.packages; S.parties = r.parties; S.users = r.users; S.pending = r.pending;
-  $('#who').innerHTML = `<b>${esc(S.me.name)}</b>${esc(S.me.roleName)}`;
+  const initials = S.me.name.split(/\s+/).map(x => x[0] || '').slice(0, 2).join('').toUpperCase();
+  $('#who').innerHTML = `<span class="avatar">${esc(initials)}</span><span><b>${esc(S.me.name)}</b><small>${esc(S.me.roleName)}</small></span>`;
   $('#projectName').textContent = S.project ? S.project.ProjectName : '';
   buildNav();
 }
@@ -177,21 +217,21 @@ async function startApp() {
    3. ROUTER — role-aware navigation
    ===================================================================== */
 const NAV = [
-  { id: 'dashboard', label: 'Dashboard', show: () => can('dashboard', 'view') },
-  { id: 'project', label: 'Project', show: () => can('project', 'view') },
-  { id: 'packages', label: 'Work Packages', show: () => can('packages', 'view') },
-  { id: 'budget', label: 'Budget & BOQ', show: () => can('budget', 'view') },
-  { id: 'expenses', label: 'Expenses', show: () => can('expenses', 'view') },
-  { id: 'approvals', label: 'Approvals', show: () => can('expenses', 'approve') || can('budget', 'approve') || can('expenses', 'create') },
-  { id: 'parties', label: 'Parties', show: () => can('parties', 'view') },
-  { id: 'payments', label: 'Payments', show: () => can('payments', 'view') },
-  { id: 'reports', label: 'Reports', show: () => can('reports', 'view') && !S.me.hideAmounts },
-  { id: 'admin', label: 'Admin & Settings', show: () => can('admin', 'view') || can('audit', 'view') }
+  { id: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard', show: () => can('dashboard', 'view') },
+  { id: 'project', icon: 'building', label: 'Project', show: () => can('project', 'view') },
+  { id: 'packages', icon: 'package', label: 'Work Packages', show: () => can('packages', 'view') },
+  { id: 'budget', icon: 'scale', label: 'Budget & BOQ', show: () => can('budget', 'view') },
+  { id: 'expenses', icon: 'receipt', label: 'Expenses', show: () => can('expenses', 'view') },
+  { id: 'approvals', icon: 'circle-check-big', label: 'Approvals', show: () => can('expenses', 'approve') || can('budget', 'approve') || can('expenses', 'create') },
+  { id: 'parties', icon: 'users', label: 'Parties', show: () => can('parties', 'view') },
+  { id: 'payments', icon: 'wallet', label: 'Payments', show: () => can('payments', 'view') },
+  { id: 'reports', icon: 'chart-column', label: 'Reports', show: () => can('reports', 'view') && !S.me.hideAmounts },
+  { id: 'admin', icon: 'settings', label: 'Admin & Settings', show: () => can('admin', 'view') || can('audit', 'view') }
 ];
 function buildNav() {
   const cur = location.hash.slice(1);
   $('#nav').innerHTML = NAV.filter(n => n.show()).map(n =>
-    `<a class="nav-item ${n.id === cur ? 'active' : ''}" href="#${n.id}">${esc(n.label)}${n.id === 'approvals' && S.pending ? `<span class="nav-badge">${S.pending}</span>` : ''}</a>`).join('');
+    `<a class="nav-item ${n.id === cur ? 'active' : ''}" href="#${n.id}">${ic(n.icon)}<span class="nav-label">${esc(n.label)}</span>${n.id === 'approvals' && S.pending ? `<span class="nav-badge">${S.pending}</span>` : ''}</a>`).join('');
 }
 function route() {
   if (!S.me) return;
@@ -202,8 +242,8 @@ function route() {
   const nav = NAV.find(n => n.id === id);
   $('#pageTitle').textContent = nav ? nav.label : '';
   const page = $('#page');
-  page.className = 'page fade-in';
-  if (!nav) { page.innerHTML = '<div class="empty">No modules are assigned to your role. Contact the administrator.</div>'; return; }
+  page.className = 'page'; void page.offsetWidth;   // restart the page-in animation
+  if (!nav) { page.innerHTML = emptyBox('No modules are assigned to your role', 'Contact the administrator.', 'shield-check'); return; }
   page.innerHTML = '';
   VIEWS[id](page);
 }
@@ -330,18 +370,18 @@ function formModal(o) {
    col: { k, label, num, fmt(v,row) → text, html(v,row) → html }
    ===================================================================== */
 function tableHtml(cols, rows, actions, foot) {
-  return `<div class="tbl-wrap"><table class="tbl stack"><thead><tr>${cols.map(c => `<th class="${c.num ? 'num' : ''}">${esc(c.label)}</th>`).join('')}${actions ? '<th></th>' : ''}</tr></thead>
-    <tbody>${rows.map((row, i) => `<tr>${cols.map(c => `<td class="${c.num ? 'num' : ''}" data-label="${esc(c.label)}">${c.html ? c.html(row[c.k], row) : esc(c.fmt ? c.fmt(row[c.k], row) : row[c.k])}</td>`).join('')}${actions ? `<td class="acts">${actions(row).map((a, j) => `<button class="btn-link ${a.danger ? 'danger' : ''}" type="button" data-i="${i}" data-j="${j}">${esc(a.label)}</button>`).join('')}</td>` : ''}</tr>`).join('')}</tbody>${foot || ''}</table></div>`;
+  return `<div class="tbl-wrap"><table class="tbl stack"><thead><tr>${cols.map(c => `<th class="${c.num ? 'num' : ''}">${esc(c.label)}</th>`).join('')}${actions ? '<th class="acts"></th>' : ''}</tr></thead>
+    <tbody>${rows.map((row, i) => `<tr>${cols.map(c => `<td class="${c.num ? 'num' : ''}${c.wrap ? ' wrap' : ''}" data-label="${esc(c.label)}"><span class="cell">${c.html ? c.html(row[c.k], row) : esc(c.fmt ? c.fmt(row[c.k], row) : row[c.k])}</span></td>`).join('')}${actions ? `<td class="acts">${actions(row).map((a, j) => `<button class="btn-link ${a.danger ? 'danger' : ''}" type="button" data-i="${i}" data-j="${j}">${esc(a.label)}</button>`).join('')}</td>` : ''}</tr>`).join('')}</tbody>${foot || ''}</table></div>`;
 }
 function listView(host, o) {
   const st = { page: 1, q: '', filters: Object.assign({}, o.fixed || {}), from: '', to: '', rows: [] };
   host.innerHTML = `<div class="toolbar">
-      <input class="input search" type="search" placeholder="Search">
+      <div class="search-box">${ic('search')}<input class="input search" type="search" placeholder="Search"></div>
       ${(o.filters || []).map(f => `<select class="input sm" data-filter="${f.k}"><option value="">${esc(f.label)}: All</option>${f.options.map(x => `<option>${esc(x)}</option>`).join('')}</select>`).join('')}
-      ${o.dates ? '<input class="input sm" type="date" data-d="from" title="From date"><input class="input sm" type="date" data-d="to" title="To date">' : ''}
+      ${o.dates ? '<label class="date-f">From<input class="input sm" type="date" data-d="from"></label><label class="date-f">To<input class="input sm" type="date" data-d="to"></label>' : ''}
       <span class="spacer"></span>
-      ${o.canExport ? '<button class="btn btn-ghost" type="button" data-x="csv">Export CSV</button><button class="btn btn-ghost" type="button" data-x="print">Print</button>' : ''}
-      ${o.onAdd ? `<button class="btn btn-primary" type="button" data-x="add">${esc(o.addLabel || 'Add')}</button>` : ''}
+      ${o.canExport ? `<button class="btn btn-ghost" type="button" data-x="csv">${ic('download')}Export CSV</button><button class="btn btn-ghost" type="button" data-x="print">${ic('printer')}Print</button>` : ''}
+      ${o.onAdd ? `<button class="btn btn-primary" type="button" data-x="add">${ic('plus')}${esc(o.addLabel || 'Add')}</button>` : ''}
     </div><div class="lv-body"></div>`;
   const body = $('.lv-body', host);
   const query = extra => Object.assign({ entity: o.entity, page: st.page, q: st.q, filters: st.filters, from: st.from, to: st.to }, extra || {});
@@ -350,9 +390,9 @@ function listView(host, o) {
     try {
       const r = await api('list', query());
       st.rows = r.rows;
-      if (!r.rows.length) { body.innerHTML = '<div class="empty">No records found</div>'; return; }
+      if (!r.rows.length) { body.innerHTML = emptyBox('No records found', st.q || st.from || st.to || Object.keys(st.filters).some(k => st.filters[k]) ? 'Try a different search or filter.' : (o.onAdd ? 'Use the button above to add the first one.' : '')); return; }
       const pages = Math.ceil(r.total / r.pageSize) || 1;
-      body.innerHTML = tableHtml(o.cols, r.rows, o.actions) + `<div class="pager"><button class="btn btn-ghost" type="button" data-p="-1" ${r.page <= 1 ? 'disabled' : ''}>Previous</button><span class="muted">Page ${r.page} of ${pages} · ${r.total} records</span><button class="btn btn-ghost" type="button" data-p="1" ${r.page >= pages ? 'disabled' : ''}>Next</button></div>`;
+      body.innerHTML = tableHtml(o.cols.filter(c => !c.csvOnly), r.rows, o.actions) + `<div class="pager"><button class="btn btn-ghost" type="button" data-p="-1" ${r.page <= 1 ? 'disabled' : ''}>${ic('chevron-left')}Previous</button><span class="muted">Page ${r.page} of ${pages} · ${r.total} records</span><button class="btn btn-ghost" type="button" data-p="1" ${r.page >= pages ? 'disabled' : ''}>Next${ic('chevron-right')}</button></div>`;
     } catch (e) { body.innerHTML = errorBox(e.message); }
   }
   body.addEventListener('click', e => {
@@ -397,40 +437,78 @@ async function removeRow(action, payload, message, reload) {
 const VIEWS = {};
 
 /* ---------------- Dashboard ---------------- */
+let dashChart = null;
+const compact = v => { v = Number(v) || 0; return v >= 1e7 ? '₹' + (v / 1e7).toFixed(1) + ' Cr' : v >= 1e5 ? '₹' + (v / 1e5).toFixed(1) + ' L' : v >= 1e3 ? '₹' + Math.round(v / 1e3) + 'K' : '₹' + v; };
+const monthLabel = k => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+k.slice(5) - 1] + ' ' + k.slice(2, 4);
+function countUp(root) {
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  $$('[data-count]', root).forEach(el => {
+    const end = Number(el.dataset.count), isMoney = el.dataset.fmt === 'money', show = v => { el.textContent = isMoney ? money(v) : String(v); };
+    if (!end) return;
+    const t0 = performance.now();
+    const step = t => { const k = Math.min(1, (t - t0) / 750), e = 1 - Math.pow(1 - k, 3); if (k < 1) { show(Math.round(end * e)); requestAnimationFrame(step); } else show(end); };
+    requestAnimationFrame(step);
+  });
+}
 VIEWS.dashboard = async page => {
   page.innerHTML = skeleton(5);
   let d;
   try { d = await api('dashboard'); } catch (e) { page.innerHTML = errorBox(e.message); $('[data-retry]', page).onclick = () => VIEWS.dashboard(page); return; }
   S.pending = d.pending; buildNav();
-  const kpi = (label, value, sub, link) => `<div class="kpi ${link ? 'link' : ''}" ${link ? `data-go="${link}"` : ''}><div class="k-label">${esc(label)}</div><div class="k-value">${esc(value)}</div>${sub ? `<div class="k-sub">${esc(sub)}</div>` : ''}</div>`;
+  if (dashChart) { dashChart.destroy(); dashChart = null; }
+  const kpi = (icon, label, value, sub, link, fmt) => `<div class="kpi ${link ? 'link' : ''}" ${link ? `data-go="${link}"` : ''}><span class="kpi-ic">${ic(icon)}</span><div class="k-label">${esc(label)}</div><div class="k-value" data-count="${Number(value) || 0}" data-fmt="${fmt || 'int'}">${esc(fmt === 'money' ? money(value) : value)}</div>${sub ? `<div class="k-sub">${esc(sub)}</div>` : ''}</div>`;
   const pkTotal = Object.keys(d.packageStatus).reduce((a, k) => a + d.packageStatus[k], 0);
-  const pkSub = Object.keys(d.packageStatus).map(k => k + ': ' + d.packageStatus[k]).join(' · ');
+  const pkSub = Object.keys(d.packageStatus).map(k => d.packageStatus[k] + ' ' + k.toLowerCase()).join(', ') || 'None created yet';
+  const kApprovals = kpi('circle-check-big', 'Pending approvals', d.pending, 'Waiting for your action', 'approvals');
+  const kPackages = kpi('package', 'Work packages', pkTotal, pkSub, can('packages', 'view') ? 'packages' : '');
   if (d.limited) {
-    page.innerHTML = `<div class="kpis">${kpi('Pending Approvals', d.pending, 'Waiting for your action', 'approvals')}${kpi('Work Packages', pkTotal, pkSub, can('packages', 'view') ? 'packages' : '')}</div>`;
+    page.innerHTML = `<div class="kpis">${kApprovals}${kPackages}</div>`;
   } else {
-    const maxM = Math.max(1, ...d.months.map(m => m.amount));
+    const ringP = Math.max(0, Math.min(100, d.pct)), maxM = Math.max(1, ...d.months.map(m => m.amount));
     page.innerHTML = `
-      ${d.alert ? `<div class="banner ${d.pct >= 100 ? 'bad' : ''}">Budget alert: ${d.pct}% of the budget is used (crossed the ${d.alert}% level).</div>` : ''}
-      <div class="kpis">
-        ${kpi('Total Budget', money(d.budget), 'Includes contingency ' + money(d.contingency))}
-        ${kpi('Actual Cost', money(d.actual), d.pct + '% of budget used')}
-        ${kpi('Budget Balance', money(d.balance), 'Awaiting approval: ' + money(d.awaitingApproval))}
-        ${kpi('Payables Outstanding', money(d.payable), 'Advances with parties: ' + money(d.advances), can('parties', 'view') ? 'parties' : '')}
-        ${kpi('Pending Approvals', d.pending, 'Waiting for your action', 'approvals')}
-        ${kpi('Work Packages', pkTotal, pkSub, can('packages', 'view') ? 'packages' : '')}
+      ${d.alert ? `<div class="banner ${d.pct >= 100 ? 'bad' : ''}">${ic('alert')}${d.pct}% of the budget is used. It has crossed the ${d.alert}% alert level.</div>` : ''}
+      <div class="dash-top">
+        <div class="card hero">
+          <div class="ring ${d.pct >= 100 ? 'over' : ''}"><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="52"/><circle class="val" cx="60" cy="60" r="52" style="stroke-dashoffset:${(327 * (1 - ringP / 100)).toFixed(1)}"/></svg>
+            <div class="ring-txt"><b>${Math.round(d.pct)}%</b><span>budget used</span></div></div>
+          <div class="hero-stats"><h3>Budget position</h3>
+            <div class="stat-line"><span>Total budget</span><b data-count="${d.budget}" data-fmt="money">${money(d.budget)}</b></div>
+            <div class="stat-line"><span>Actual cost (approved)</span><b data-count="${d.actual}" data-fmt="money">${money(d.actual)}</b></div>
+            <div class="stat-line"><span>Balance</span><b style="${d.balance < 0 ? 'color:var(--bad)' : ''}">${money(d.balance)}</b></div>
+            <div class="stat-line"><span>Awaiting approval</span><b>${money(d.awaitingApproval)}</b></div>
+          </div>
+        </div>
+        <div class="kpis">
+          ${kpi('hand-coins', 'Payables outstanding', d.payable, 'Approved bills not yet paid', can('parties', 'view') ? 'parties' : '', 'money')}
+          ${kpi('banknote', 'Advances with parties', d.advances, 'Not yet adjusted against bills', can('parties', 'view') ? 'parties' : '', 'money')}
+          ${kApprovals}${kPackages}
+        </div>
       </div>
       <div class="grid2">
-        <div class="card"><h3>Budget vs Actual by Category</h3>${d.categories.length ? d.categories.map(c => {
+        <div class="card"><h3>Budget and actual cost by category</h3>${d.categories.length ? d.categories.map(c => {
           const p = c.budget > 0 ? c.actual / c.budget * 100 : (c.actual > 0 ? 100 : 0);
-          return `<div class="bar-row"><div class="bar-top"><span>${esc(c.category)}</span><span class="muted">${money(c.actual)} / ${money(c.budget)}</span></div><div class="bar ${c.actual > c.budget ? 'over' : ''}"><i style="width:${Math.min(100, p).toFixed(1)}%"></i></div></div>`;
+          return `<div class="bar-row"><div class="bar-top"><span>${esc(c.category)}</span><span class="muted">${money(c.actual)} of ${money(c.budget)}</span></div><div class="bar ${c.actual > c.budget ? 'over' : ''}"><i style="width:${Math.min(100, p).toFixed(1)}%"></i></div></div>`;
         }).join('') : '<p class="muted">Add BOQ items to see the budget here.</p>'}</div>
-        <div class="card"><h3>Approved Cost — Last 6 Months</h3><div class="cols">${d.months.map(m => `<div class="col"><span>${m.amount ? money(m.amount) : ''}</span><i style="height:${(m.amount / maxM * 100).toFixed(1)}%"></i><span>${esc(m.month.slice(5) + '/' + m.month.slice(2, 4))}</span></div>`).join('')}</div></div>
+        <div class="card"><h3>Approved cost, last 6 months</h3>${window.Chart ? '<div class="chart-box"><canvas id="monthChart"></canvas></div>' :
+          `<div class="cols">${d.months.map(m => `<div class="col"><span>${m.amount ? compact(m.amount) : ''}</span><i style="height:${(m.amount / maxM * 100).toFixed(1)}%"></i><span>${esc(monthLabel(m.month))}</span></div>`).join('')}</div>`}</div>
       </div>
       <div class="grid2">
-        <div class="card"><h3>Cash & Bank Balances</h3>${d.accounts.map(a => `<div class="bar-top"><span>${esc(a.account)}</span><b>${money(a.balance)}</b></div>`).join('') || '<p class="muted">No accounts configured.</p>'}</div>
-        <div class="card"><h3>Recent Expenses</h3>${d.recent.length ? d.recent.map(r => `<div class="bar-top"><span>${esc(fmtDate(r.date))} · ${esc(r.category)}<br><small class="muted">${esc(r.description)}</small></span><span class="num">${money(r.total)}<br>${badge(r.status)}</span></div>`).join('') : '<p class="muted">No expenses yet.</p>'}</div>
+        <div class="card"><h3>Cash and bank balances</h3>${d.accounts.map(a => `<div class="list-row"><span>${esc(a.account)}</span><span class="num"><b>${money(a.balance)}</b></span></div>`).join('') || '<p class="muted">No accounts are set up yet.</p>'}</div>
+        <div class="card"><h3>Recent expenses</h3>${d.recent.length ? d.recent.map(r => `<div class="list-row"><span>${esc(r.category)}<small>${esc(fmtDate(r.date))}${r.party ? ', ' + esc(r.party) : ''}</small></span><span class="num"><b>${money(r.total)}</b>${badge(r.status)}</span></div>`).join('') : '<p class="muted">No expenses have been entered yet.</p>'}</div>
       </div>`;
+    const cv = $('#monthChart', page);
+    if (cv && window.Chart) {
+      Chart.defaults.font.family = "'Inter', system-ui, sans-serif"; Chart.defaults.color = '#6e6c85';
+      dashChart = new Chart(cv, {
+        type: 'bar',
+        data: { labels: d.months.map(m => monthLabel(m.month)), datasets: [{ data: d.months.map(m => m.amount), backgroundColor: '#635bff', hoverBackgroundColor: '#4b45d6', borderRadius: 7, maxBarThickness: 40 }] },
+        options: { responsive: true, maintainAspectRatio: false, animation: { duration: 700 },
+          plugins: { legend: { display: false }, tooltip: { displayColors: false, padding: 10, callbacks: { label: c => money(c.parsed.y) } } },
+          scales: { x: { grid: { display: false }, border: { display: false } }, y: { beginAtZero: true, border: { display: false }, grid: { color: '#eceef5' }, ticks: { maxTicksLimit: 5, callback: v => compact(v) } } } }
+      });
+    }
   }
+  countUp(page);
   $$('[data-go]', page).forEach(el => { if (el.dataset.go) el.onclick = () => { location.hash = el.dataset.go; }; });
 };
 
@@ -444,7 +522,7 @@ VIEWS.project = page => {
       ${item('Plot Area', p.PlotArea)}${item('Built-up Area', p.BuiltUpArea)}${item('Floors', p.Floors)}
       ${item('Planned Start', fmtDate(p.PlannedStart))}${item('Actual Start', fmtDate(p.ActualStart))}${item('Target Completion', fmtDate(p.TargetCompletion))}${item('Actual Completion', fmtDate(p.ActualCompletion))}
       ${S.me.hideAmounts ? '' : item('Initial Budget', money(p.InitialBudget)) + item('Contingency', money(p.Contingency))}</div></div>
-    <div class="card"><div class="card-head"><h3>Locations (Blocks / Floors / Zones)</h3>${edit ? '<button class="btn btn-primary" type="button" id="addLoc">Add Location</button>' : ''}</div><div id="locs"></div></div>`;
+    <div class="card"><div class="card-head"><h3>Locations (Blocks / Floors / Zones)</h3>${edit ? `<button class="btn btn-primary" type="button" id="addLoc">${ic('plus')}Add Location</button>` : ''}</div><div id="locs"></div></div>`;
   const locForm = row => formModal({
     title: row ? 'Edit Location' : 'Add Location', values: row, editing: !!row,
     fields: [{ name: 'DisplayName', label: 'Display Name', required: true, wide: true, hint: 'Example: Block A – 2nd Floor' }, { name: 'Block', label: 'Block' }, { name: 'Floor', label: 'Floor' }, { name: 'Zone', label: 'Zone' }],
@@ -497,7 +575,7 @@ VIEWS.packages = page => {
 };
 
 /* ---------------- Budget & BOQ ---------------- */
-function simpleTable(host, rows, cols, foot) { host.innerHTML = rows.length ? tableHtml(cols, rows, null, foot) : '<div class="empty">No records found</div>'; }
+function simpleTable(host, rows, cols, foot) { host.innerHTML = rows.length ? tableHtml(cols, rows, null, foot) : emptyBox('No records found'); }
 VIEWS.budget = page => {
   const mcol = (k, label) => ({ k: k, label: label, num: true, html: v => money(v) });
   tabs(page, [
@@ -525,7 +603,7 @@ VIEWS.budget = page => {
       const lv = listView(host, {
         entity: 'boq', canExport: can('budget', 'export'), addLabel: 'Add BOQ Item', onAdd: can('budget', 'create') ? () => form(null) : null,
         filters: [{ k: 'Category', label: 'Category', options: cfgVals('BudgetCategory') }],
-        cols: [{ k: 'ItemCode', label: 'Code' }, { k: 'Category', label: 'Category' }, { k: 'Description', label: 'Description' }, { k: 'Unit', label: 'Unit' }, { k: 'EstQty', label: 'Qty', num: true }, mcol('Rate', 'Rate'), mcol('Amount', 'Amount')],
+        cols: [{ k: 'ItemCode', label: 'Code' }, { k: 'Category', label: 'Category' }, { k: 'Description', label: 'Description', wrap: true }, { k: 'Unit', label: 'Unit' }, { k: 'EstQty', label: 'Qty', num: true }, mcol('Rate', 'Rate'), mcol('Amount', 'Amount')],
         actions: row => [].concat(can('budget', 'edit') ? [{ label: 'Edit', fn: form }] : [], can('budget', 'delete') ? [{ label: 'Delete', danger: true, fn: r => removeRow('deleteMaster', { entity: 'boq', id: r.BOQID }, 'Delete this BOQ item?', lv.reload) }] : [])
       });
     } },
@@ -540,7 +618,7 @@ VIEWS.budget = page => {
           onSubmit: async v => { await api('requestRevision', v); toast('Revision sent for approval'); await refreshBoot(); lv.reload(); }
         }) : null,
         filters: [{ k: 'Status', label: 'Status', options: ['Pending', 'Approved', 'Rejected'] }],
-        cols: [{ k: 'RevisionNo', label: 'No.' }, { k: 'Category', label: 'Category' }, mcol('OldAmount', 'Old Budget'), mcol('NewAmount', 'New Budget'), { k: 'Reason', label: 'Reason' },
+        cols: [{ k: 'RevisionNo', label: 'No.' }, { k: 'Category', label: 'Category' }, mcol('OldAmount', 'Old Budget'), mcol('NewAmount', 'New Budget'), { k: 'Reason', label: 'Reason', wrap: true },
           { k: 'RequestedBy', label: 'Requested By', fmt: userName }, { k: 'ApprovedBy', label: 'Action By', fmt: userName }, { k: 'Status', label: 'Status', html: badge }]
       });
     } }
@@ -581,12 +659,18 @@ VIEWS.expenses = page => {
   const lv = listView(page, {
     entity: 'expenses', dates: true, canExport: can('expenses', 'export'), addLabel: 'New Expense', onAdd: can('expenses', 'create') ? () => expenseForm(null, () => lv.reload()) : null,
     filters: [{ k: 'ApprovalStatus', label: 'Approval', options: ['Draft', 'Submitted', 'Approved', 'Rejected'] }, { k: 'PaymentStatus', label: 'Payment', options: ['Unpaid', 'Partially Paid', 'Paid'] }, { k: 'Category', label: 'Category', options: cfgVals('BudgetCategory') }],
-    cols: [{ k: 'ExpenseID', label: 'ID' }, { k: 'ExpenseDate', label: 'Date', fmt: fmtDate }, { k: 'Category', label: 'Category', fmt: (v, r) => v + (r.SubCategory ? ' / ' + r.SubCategory : '') },
-      { k: 'Description', label: 'Description' }, { k: 'PartyName', label: 'Party' }, { k: 'InvoiceNo', label: 'Invoice No.' },
+    cols: [
+      { k: 'ExpenseID', label: 'Expense', html: (v, r) => `<b>${esc(v)}</b><small class="sub">${esc(fmtDate(r.ExpenseDate))}</small>` },
+      { k: 'ExpenseDate', label: 'Date', csvOnly: true },
+      { k: 'Category', label: 'Category', html: (v, r) => esc(v) + (r.SubCategory ? `<small class="sub">${esc(r.SubCategory)}</small>` : '') },
+      { k: 'SubCategory', label: 'Sub-category', csvOnly: true },
+      { k: 'Description', label: 'Description', wrap: true, html: (v, r) => esc(v) + `<small class="sub">Entered by ${esc(userName(r.EnteredBy))}</small>` },
+      { k: 'PartyName', label: 'Party', html: (v, r) => esc(v || '—') + (r.InvoiceNo ? `<small class="sub">Invoice ${esc(r.InvoiceNo)}</small>` : '') },
+      { k: 'InvoiceNo', label: 'Invoice No.', csvOnly: true },
       { k: 'TotalAmount', label: 'Total', num: true, html: v => money(v) }, { k: 'PaidAmount', label: 'Paid', num: true, html: v => money(v) },
-      { k: 'ApprovalStatus', label: 'Approval', html: (v, r) => badge(v) + (v === 'Rejected' && r.RejectReason ? `<br><small class="muted">${esc(r.RejectReason)}</small>` : '') },
-      { k: 'PaymentStatus', label: 'Payment', html: (v, r) => r.ApprovalStatus === 'Approved' ? badge(v) : '' },
-      { k: 'EnteredBy', label: 'Entered By', fmt: userName }],
+      { k: 'ApprovalStatus', label: 'Status', html: (v, r) => `<span class="badges">${badge(v)}${v === 'Approved' ? badge(r.PaymentStatus) : ''}</span>` + (v === 'Rejected' && r.RejectReason ? `<small class="sub">${esc(r.RejectReason)}</small>` : '') },
+      { k: 'PaymentStatus', label: 'Payment', csvOnly: true }, { k: 'RejectReason', label: 'Reject Reason', csvOnly: true },
+      { k: 'EnteredBy', label: 'Entered by', fmt: userName, csvOnly: true }],
     actions: r => {
       const a = [];
       if (r.BillLink) a.push({ label: 'Bill', fn: x => window.open(x.BillLink, '_blank', 'noopener') });
@@ -609,7 +693,7 @@ VIEWS.approvals = async page => {
   let r;
   try { r = await api('listApprovals'); } catch (e) { page.innerHTML = errorBox(e.message); $('[data-retry]', page).onclick = () => VIEWS.approvals(page); return; }
   S.pending = r.rows.filter(x => x.canAct).length; buildNav();
-  if (!r.rows.length) { page.innerHTML = '<div class="empty">Nothing is waiting for approval.</div>'; return; }
+  if (!r.rows.length) { page.innerHTML = emptyBox('Nothing is waiting for approval', 'New requests will appear here.', 'circle-check-big'); return; }
   page.innerHTML = r.rows.map((a, i) => `<div class="card ap-card fade-in">
       <div class="ap-main"><b>${esc(a.title)}</b> <span class="badge info">${esc(a.type === 'Expense' ? a.entityId : 'Budget')}</span>
         <div>${esc(a.detail)}</div>
@@ -647,7 +731,7 @@ VIEWS.parties = page => {
     const m = modal('Ledger — ' + row.Name, skeleton(4), '<button class="btn btn-ghost" type="button" data-x="csv">Export CSV</button>', 'wide');
     try {
       const r = await api('partyLedger', { id: row.PartyID });
-      const cols = [{ k: 'date', label: 'Date', fmt: fmtDate }, { k: 'ref', label: 'Ref' }, { k: 'particulars', label: 'Particulars' }, { k: 'credit', label: 'Bill', num: true, html: v => v ? money(v) : '' }, { k: 'debit', label: 'Paid', num: true, html: (v, x) => v ? money(v) : (x.note ? '<small class="muted">' + money(x.note) + ' adj.</small>' : '') }, { k: 'balance', label: 'Balance', num: true, html: v => money(v) }];
+      const cols = [{ k: 'date', label: 'Date', fmt: fmtDate }, { k: 'ref', label: 'Ref' }, { k: 'particulars', label: 'Particulars', wrap: true }, { k: 'credit', label: 'Bill', num: true, html: v => v ? money(v) : '' }, { k: 'debit', label: 'Paid', num: true, html: (v, x) => v ? money(v) : (x.note ? '<small class="muted">' + money(x.note) + ' adj.</small>' : '') }, { k: 'balance', label: 'Balance', num: true, html: v => money(v) }];
       $('.modal-body', m.el).innerHTML = `<div class="kpis"><div class="kpi"><div class="k-label">Opening</div><div class="k-value">${money(r.opening)}</div></div><div class="kpi"><div class="k-label">Outstanding</div><div class="k-value">${money(r.outstanding)}</div></div><div class="kpi"><div class="k-label">Advance Balance</div><div class="k-value">${money(r.advanceBal)}</div></div><div class="kpi"><div class="k-label">Net Payable</div><div class="k-value">${money(r.net)}</div></div></div>` +
         (r.rows.length ? tableHtml(cols, r.rows) : '<p class="muted">No transactions yet.</p>');
       $('[data-x=csv]', m.el).onclick = () => exportCSV('ledger_' + row.Name.replace(/\W+/g, '_'), ['Date', 'Ref', 'Particulars', 'Bill', 'Paid', 'Balance'], r.rows.map(x => [x.date, x.ref, x.particulars, x.credit, x.debit, x.balance]));
@@ -715,7 +799,7 @@ VIEWS.reports = page => {
       <select class="input sm hidden" id="rAcc">${cfgVals('Account').map(a => `<option>${esc(a)}</option>`).join('')}</select>
       <input class="input sm hidden" type="date" id="rFrom" title="From date"><input class="input sm hidden" type="date" id="rTo" title="To date">
       <span class="spacer"></span>
-      ${can('reports', 'export') ? '<button class="btn btn-ghost" type="button" id="rCsv">Export CSV</button><button class="btn btn-ghost" type="button" id="rPrint">Print</button>' : ''}
+      ${can('reports', 'export') ? `<button class="btn btn-ghost" type="button" id="rCsv">${ic('download')}Export CSV</button><button class="btn btn-ghost" type="button" id="rPrint">${ic('printer')}Print</button>` : ''}
     </div><div id="rBody"></div>`;
   const body = $('#rBody', page);
   let last = { rows: [], keys: [] };
@@ -729,10 +813,10 @@ VIEWS.reports = page => {
       const keys = r.rows.length ? Object.keys(r.rows[0]) : [];
       last = { rows: r.rows, keys: keys, type: type };
       const isNum = k => typeof r.rows[0][k] === 'number';
-      const cols = keys.map(k => isNum(k) ? { k: k, label: label(k), num: true, html: v => k === 'UsedPct' ? esc(v) + '%' : money(v) } : { k: k, label: label(k), fmt: /date/i.test(k) ? fmtDate : null });
+      const cols = keys.map(k => isNum(k) ? { k: k, label: label(k), num: true, html: v => k === 'UsedPct' ? esc(v) + '%' : money(v) } : { k: k, label: label(k), wrap: /^(Description|Particulars)$/.test(k), fmt: /date/i.test(k) ? fmtDate : null });
       const foot = keys.length && !cash ? `<tfoot><tr>${keys.map((k, i) => i === 0 ? '<td>Total</td>' : (isNum(k) && k !== 'UsedPct' ? `<td class="num">${money(r.rows.reduce((a, x) => a + x[k], 0))}</td>` : '<td></td>')).join('')}</tr></tfoot>` : '';
       body.innerHTML = (cash ? `<div class="kpis"><div class="kpi"><div class="k-label">Opening Balance</div><div class="k-value">${money(r.opening)}</div></div><div class="kpi"><div class="k-label">Closing Balance</div><div class="k-value">${money(r.closing)}</div></div></div>` : '') +
-        (r.rows.length ? tableHtml(cols, r.rows, null, foot) : '<div class="empty">No data for this report</div>');
+        (r.rows.length ? tableHtml(cols, r.rows, null, foot) : emptyBox('No data for this report', '', 'chart-column'));
     } catch (e) { body.innerHTML = errorBox(e.message); }
   };
   body.addEventListener('click', e => { if (e.target.closest('[data-retry]')) run(); });
@@ -827,7 +911,7 @@ VIEWS.admin = page => {
       const open = async row => { try { await loadRoles(); } catch (e) { return toast(e.message, false); } roleEditor(row, roleCache, () => lv.reload()); };
       const lv = listView(host, {
         entity: 'roles', addLabel: 'New Role', onAdd: edit ? () => open(null) : null,
-        cols: [{ k: 'RoleName', label: 'Role', html: (v, r) => esc(v) + (r.IsSystem === true || r.IsSystem === 'TRUE' ? ' <span class="badge info">System</span>' : '') }, { k: 'Description', label: 'Description' },
+        cols: [{ k: 'RoleName', label: 'Role', html: (v, r) => esc(v) + (r.IsSystem === true || r.IsSystem === 'TRUE' ? ' <span class="badge info">System</span>' : '') }, { k: 'Description', label: 'Description', wrap: true },
           { k: 'ApprovalLimit', label: 'Approval Limit', num: true, html: (v, r) => (r.IsSystem === true || r.IsSystem === 'TRUE') ? 'Unlimited' : (v === '' ? '—' : money(v)) },
           { k: 'OwnOnly', label: 'Own Entries Only', fmt: v => (v === true || v === 'TRUE') ? 'Yes' : 'No' }, { k: 'HideAmounts', label: 'Amounts Hidden', fmt: v => (v === true || v === 'TRUE') ? 'Yes' : 'No' }],
         actions: r => edit ? [{ label: 'Edit', fn: open }].concat((r.IsSystem === true || r.IsSystem === 'TRUE') ? [] : [{ label: 'Delete', danger: true, fn: x => removeRow('deleteRole', { id: x.RoleID }, 'Delete role "' + x.RoleName + '"?', lv.reload) }]) : []
@@ -851,9 +935,9 @@ VIEWS.admin = page => {
           }
         });
         const acts = edit ? r => [{ label: 'Edit', fn: form }].concat(meta.fixed ? [] : [{ label: 'Delete', danger: true, fn: x => removeRow('deleteMaster', { entity: 'config', id: x.id }, 'Delete "' + x.value + '"? Existing records keep the old value.', async () => { await refreshBoot(); draw(); }) }]) : null;
-        host.innerHTML = `<div class="toolbar"><select class="input sm" id="cfgType" style="max-width:280px">${Object.keys(CFG_TYPES).map(k => `<option value="${k}" ${k === type ? 'selected' : ''}>${esc(CFG_TYPES[k].label)}</option>`).join('')}</select><span class="spacer"></span>${edit && !meta.fixed ? '<button class="btn btn-primary" type="button" id="cfgAdd">Add</button>' : ''}</div>
+        host.innerHTML = `<div class="toolbar"><select class="input sm" id="cfgType" style="max-width:280px">${Object.keys(CFG_TYPES).map(k => `<option value="${k}" ${k === type ? 'selected' : ''}>${esc(CFG_TYPES[k].label)}</option>`).join('')}</select><span class="spacer"></span>${edit && !meta.fixed ? `<button class="btn btn-primary" type="button" id="cfgAdd">${ic('plus')}Add</button>` : ''}</div>
           ${type === 'Module' ? '<div class="note">These switches are stored now and take effect when the Contractor, Material and Labour modules are added.</div>' : ''}
-          <div id="cfgList">${list.length ? tableHtml(cols, list, acts) : '<div class="empty">No values yet</div>'}</div>`;
+          <div id="cfgList">${list.length ? tableHtml(cols, list, acts) : emptyBox('No values yet')}</div>`;
         $('#cfgType', host).onchange = e => { type = e.target.value; draw(); };
         const add = $('#cfgAdd', host); if (add) add.onclick = () => form(null);
         $('#cfgList', host).onclick = e => { const a = e.target.closest('[data-i]'); if (a && acts) acts(list[+a.dataset.i])[+a.dataset.j].fn(list[+a.dataset.i]); };
@@ -889,6 +973,10 @@ function changePin() {
 }
 document.addEventListener('DOMContentLoaded', () => {
   document.title = CONFIG.APP_NAME;
+  $('#pinBtn').innerHTML = ic('key-round') + 'Change PIN';
+  $('#logoutBtn').innerHTML = ic('log-out') + 'Sign out';
+  $('#menuBtn').innerHTML = ic('menu');
+  $('#todayChip').innerHTML = ic('clock') + esc(new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }));
   $('#loginForm').addEventListener('submit', doLogin);
   $('#logoutBtn').onclick = () => logout(false);
   $('#pinBtn').onclick = changePin;
