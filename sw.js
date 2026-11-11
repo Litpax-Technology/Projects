@@ -1,5 +1,5 @@
 /* Site ERP service worker — caches the app shell only. API calls are never cached. */
-const CACHE = 'site-erp-shell-v1';
+const CACHE = 'site-erp-shell-v2';
 const SHELL = ['./', './index.html', './style.css', './app.js', './config.js', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', e => {
