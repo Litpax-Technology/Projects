@@ -7,6 +7,9 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <title>Site ERP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -14,34 +17,90 @@
   <div id="splash" class="center-wrap"><div class="spinner lg"></div></div>
 
   <!-- Login -->
-  <div id="loginView" class="center-wrap hidden">
-    <form id="loginForm" class="login-card fade-in" autocomplete="off">
-      <h1 class="brand">Site ERP</h1>
-      <p class="muted">Sign in to continue</p>
-      <input id="loginId" class="input" type="text" placeholder="Login ID / Mobile number" autocapitalize="none" required />
-      <input id="loginPin" class="input" type="password" inputmode="numeric" placeholder="PIN" required />
-      <button id="loginBtn" class="btn btn-primary block" type="submit">Sign In</button>
-      <div id="loginErr" class="err" role="alert"></div>
-    </form>
+  <div id="loginView" class="login hidden">
+    <section class="login-art" aria-hidden="true">
+      <div class="art-grid"></div>
+      <div class="art-brand">
+        <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M14 6a6 6 0 0 1 6 6v3"/><path d="M4 15v-3a6 6 0 0 1 6-6"/><rect x="2" y="15" width="20" height="4" rx="1"/></svg></span>
+        Site ERP
+      </div>
+
+      <!-- Building drawn floor by floor, crane working on the top slab -->
+      <svg class="art-svg" viewBox="0 0 520 400" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <g class="ln">
+          <path class="draw d0" pathLength="1" d="M40 350H480" />
+          <!-- floor 1 -->
+          <path class="draw d1" pathLength="1" d="M130 350V290M185 350V290M240 350V290M295 350V290M350 350V290" />
+          <path class="draw d2" pathLength="1" d="M122 290H358" />
+          <!-- floor 2 -->
+          <path class="draw d3" pathLength="1" d="M130 290V230M185 290V230M240 290V230M295 290V230M350 290V230" />
+          <path class="draw d4" pathLength="1" d="M122 230H358" />
+          <!-- floor 3 -->
+          <path class="draw d5" pathLength="1" d="M130 230V170M185 230V170M240 230V170M295 230V170M350 230V170" />
+          <path class="draw d6" pathLength="1" d="M122 170H358" />
+          <!-- floor 4, still going up -->
+          <path class="draw d7" pathLength="1" d="M130 170V110M185 170V110M240 170V110" />
+          <!-- crane -->
+          <path class="draw d3" pathLength="1" d="M420 350V46M440 350V46M420 46H440" />
+          <path class="draw d4 thin" pathLength="1" d="M420 330L440 310L420 290L440 270L420 250L440 230L420 210L440 190L420 170L440 150L420 130L440 110L420 90L440 70L420 50" />
+          <path class="draw d5" pathLength="1" d="M200 62H486M200 62V70M486 62V78H466V62" />
+          <path class="draw d6 thin" pathLength="1" d="M430 46V28M430 28L230 62M430 28L480 62" />
+        </g>
+        <g class="acc">
+          <path class="draw d8" pathLength="1" d="M122 110H248" />
+          <!-- dimension line -->
+          <path class="draw d8 thin" pathLength="1" d="M96 350V110M90 350H102M90 110H102" />
+        </g>
+        <g class="hook">
+          <path class="acc-line" d="M270 62V112" />
+          <rect class="load" x="252" y="112" width="36" height="12" rx="2" />
+        </g>
+        <text class="dim" x="84" y="234" transform="rotate(-90 84 234)">G + 3</text>
+      </svg>
+
+      <div class="art-copy">
+        <h2>Every rupee on site, accounted for.</h2>
+        <p>Budget, bills, approvals and payments for your project, in one place.</p>
+      </div>
+    </section>
+
+    <section class="login-panel">
+      <form id="loginForm" class="login-card" autocomplete="off" novalidate>
+        <span class="logo lg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M14 6a6 6 0 0 1 6 6v3"/><path d="M4 15v-3a6 6 0 0 1 6-6"/><rect x="2" y="15" width="20" height="4" rx="1"/></svg></span>
+        <h1>Sign in to Site ERP</h1>
+        <p class="muted">Use the login ID and PIN given by your administrator.</p>
+        <label class="field"><span class="lbl">Login ID or mobile number</span>
+          <input id="loginId" class="input" type="text" autocapitalize="none" autocomplete="username" /></label>
+        <label class="field"><span class="lbl">PIN</span>
+          <input id="loginPin" class="input" type="password" inputmode="numeric" autocomplete="current-password" /></label>
+        <button id="loginBtn" class="btn btn-primary block" type="submit">Sign in</button>
+        <div id="loginErr" class="err" role="alert"></div>
+      </form>
+      <p class="login-foot">Access is limited by role. Every change is recorded in the audit log.</p>
+    </section>
   </div>
 
   <!-- App shell -->
   <div id="appView" class="app hidden">
     <aside id="sidebar" class="sidebar">
-      <div class="brand-side">Site ERP</div>
-      <div id="projectName" class="project-name"></div>
+      <div class="brand-side">
+        <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M14 6a6 6 0 0 1 6 6v3"/><path d="M4 15v-3a6 6 0 0 1 6-6"/><rect x="2" y="15" width="20" height="4" rx="1"/></svg></span>
+        <span><b>Site ERP</b><small id="projectName"></small></span>
+      </div>
       <nav id="nav"></nav>
       <div class="side-foot">
         <div id="who" class="who"></div>
-        <button id="pinBtn" class="side-btn" type="button">Change PIN</button>
-        <button id="logoutBtn" class="side-btn" type="button">Sign Out</button>
+        <button id="pinBtn" class="side-btn" type="button"></button>
+        <button id="logoutBtn" class="side-btn" type="button"></button>
       </div>
     </aside>
     <div id="scrim" class="scrim"></div>
     <main class="content">
       <header class="topbar">
-        <button id="menuBtn" class="icon-btn" type="button" aria-label="Menu"><span></span><span></span><span></span></button>
+        <button id="menuBtn" class="icon-btn" type="button" aria-label="Open menu"></button>
         <h2 id="pageTitle"></h2>
+        <span class="spacer"></span>
+        <span id="todayChip" class="chip"></span>
       </header>
       <section id="page" class="page"></section>
     </main>
@@ -49,6 +108,7 @@
 
   <div id="toast" class="toast" role="status"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js"></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
