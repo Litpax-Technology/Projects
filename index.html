@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1e1b4b" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <title>Site ERP</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Splash while the session is checked -->
+  <div id="splash" class="center-wrap"><div class="spinner lg"></div></div>
+
+  <!-- Login -->
+  <div id="loginView" class="center-wrap hidden">
+    <form id="loginForm" class="login-card fade-in" autocomplete="off">
+      <h1 class="brand">Site ERP</h1>
+      <p class="muted">Sign in to continue</p>
+      <input id="loginId" class="input" type="text" placeholder="Login ID / Mobile number" autocapitalize="none" required />
+      <input id="loginPin" class="input" type="password" inputmode="numeric" placeholder="PIN" required />
+      <button id="loginBtn" class="btn btn-primary block" type="submit">Sign In</button>
+      <div id="loginErr" class="err" role="alert"></div>
+    </form>
+  </div>
+
+  <!-- App shell -->
+  <div id="appView" class="app hidden">
+    <aside id="sidebar" class="sidebar">
+      <div class="brand-side">Site ERP</div>
+      <div id="projectName" class="project-name"></div>
+      <nav id="nav"></nav>
+      <div class="side-foot">
+        <div id="who" class="who"></div>
+        <button id="pinBtn" class="side-btn" type="button">Change PIN</button>
+        <button id="logoutBtn" class="side-btn" type="button">Sign Out</button>
+      </div>
+    </aside>
+    <div id="scrim" class="scrim"></div>
+    <main class="content">
+      <header class="topbar">
+        <button id="menuBtn" class="icon-btn" type="button" aria-label="Menu"><span></span><span></span><span></span></button>
+        <h2 id="pageTitle"></h2>
+      </header>
+      <section id="page" class="page"></section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
