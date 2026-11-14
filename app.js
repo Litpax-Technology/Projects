@@ -56,15 +56,45 @@ const ICONS = {
 };
 const ic = n => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 
+/* ---- Fast data: recent read results are remembered so pages open instantly.
+        Any change (save / approve / delete / payment …) clears everything,
+        so a page never shows figures from before that change. ---- */
+const READS = { bootstrap: 1, dashboard: 1, list: 1, listApprovals: 1, partyLedger: 1, payables: 1, report: 1 };
+const DC = new Map(), DC_TTL = 5 * 60 * 1000;
+let DC_GEN = 0;
+const dcKey = (action, data) => action + '|' + JSON.stringify(data || {});
+function cached(action, data) { const e = DC.get(dcKey(action, data)); return e && Date.now() - e.t < DC_TTL ? e.v : null; }
+function clearCache() { DC.clear(); DC_GEN++; }
+
+/* ---- Top loading bar while the server is working ---- */
+const NET = { n: 0, t: 0, p: 0, bar: null };
+function netStart() {
+  if (!NET.bar) { NET.bar = document.createElement('div'); NET.bar.id = 'netBar'; NET.bar.setAttribute('aria-hidden', 'true'); document.body.appendChild(NET.bar); }
+  if (++NET.n > 1) return;
+  clearInterval(NET.t); NET.p = .08; NET.bar.style.transform = 'scaleX(.08)'; NET.bar.classList.add('on');
+  NET.t = setInterval(() => { NET.p += (.9 - NET.p) * .08; NET.bar.style.transform = 'scaleX(' + NET.p + ')'; }, 200);
+}
+function netEnd() {
+  if (NET.n === 0 || --NET.n > 0) return;
+  clearInterval(NET.t); NET.bar.style.transform = 'scaleX(1)';
+  setTimeout(() => { if (!NET.n) { NET.bar.classList.remove('on'); setTimeout(() => { if (!NET.n) NET.bar.style.transform = 'scaleX(0)'; }, 300); } }, 200);
+}
+
 function api(action, data) {
   return new Promise((resolve, reject) => {
     const cb = 'jp_' + uid();
     const s = document.createElement('script');
+    const gen = DC_GEN;
     let done = false;
-    const finish = (fn, v) => { if (done) return; done = true; clearTimeout(timer); window[cb] = function () {}; s.remove(); fn(v); };
+    netStart();
+    const finish = (fn, v) => { if (done) return; done = true; clearTimeout(timer); window[cb] = function () {}; s.remove(); netEnd(); fn(v); };
     const timer = setTimeout(() => finish(reject, new Error('The server took too long to respond. Your data is kept — please try again.')), CONFIG.TIMEOUT_MS);
     window[cb] = res => {
-      if (res && res.ok) return finish(resolve, res);
+      if (res && res.ok) {
+        if (!READS[action]) clearCache();                                          // something changed → forget old data
+        else if (gen === DC_GEN) DC.set(dcKey(action, data), { t: Date.now(), v: res });  // only if nothing changed meanwhile
+        return finish(resolve, res);
+      }
       const e = new Error((res && res.message) || 'Request failed'); e.code = res && res.error;
       finish(reject, e);
       if (e.code === 'AUTH' && S.token) logout(true);
@@ -105,10 +135,12 @@ async function uploadFile(file) {
     data = await readBase64(file);
   } else { data = await compressImage(file); mime = 'image/jpeg'; name = name.replace(/\.\w+$/, '') + '.jpg'; }
   let j;
+  netStart();
   try {
     const r = await fetch(CONFIG.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ token: S.token, name: name, mime: mime, data: data }) });
     j = await r.json();
   } catch (e) { throw new Error('Bill upload failed. Check your connection and try again.'); }
+  finally { netEnd(); }
   if (!j.ok) throw new Error(j.message || 'Bill upload failed');
   return j.url;
 }
@@ -128,7 +160,13 @@ function modal(title, bodyHtml, footHtml, cls) {
   ov.innerHTML = `<div class="modal ${cls || ''}" role="dialog" aria-modal="true">
     <div class="modal-head"><h3>${esc(title)}</h3><button class="modal-x" type="button" aria-label="Close">&times;</button></div>
     <div class="modal-body">${bodyHtml}</div>${footHtml ? `<div class="modal-foot">${footHtml}</div>` : ''}</div>`;
-  const close = () => ov.remove();
+  let closing = false;
+  const close = () => {                          // smooth close: fade + sink, then remove
+    if (closing) return; closing = true;
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return ov.remove();
+    ov.classList.add('closing');
+    setTimeout(() => ov.remove(), 190);
+  };
   $('.modal-x', ov).onclick = close;
   document.body.appendChild(ov);
   return { el: ov, close: close };
@@ -152,6 +190,7 @@ const emptyBox = (title, hint, icon) => `<div class="empty"><span class="empty-i
 const errorBox = msg => `<div class="empty"><span class="empty-ic">${ic('alert')}</span><b>Could not load this page</b><span>${esc(msg)}</span><button class="btn btn-ghost" type="button" data-retry>Try again</button></div>`;
 function busy(btn, on) {
   if (!btn) return;
+  $$('.ripple', btn).forEach(x => x.remove());      // don't save the click ripple with the label
   if (on) { btn.dataset.txt = btn.innerHTML; btn.innerHTML = '<span class="spinner"></span>' + esc(btn.textContent); btn.disabled = true; }
   else { if (btn.dataset.txt) btn.innerHTML = btn.dataset.txt; btn.disabled = false; }
 }
@@ -191,6 +230,7 @@ async function doLogin(e) {
 }
 function logout(expired) {
   S.token = null; S.me = null;
+  clearCache();
   localStorage.removeItem(CONFIG.TOKEN_KEY);
   $$('.overlay').forEach(o => o.remove());
   showOnly('loginView');
@@ -211,7 +251,25 @@ async function startApp() {
   catch (e) { if (S.token) { showOnly('loginView'); $('#loginErr').textContent = e.message; } return; }
   showOnly('appView');
   route();
+  // Chart library is only needed on the dashboard: fetch it quietly once the app is on screen
+  (window.requestIdleCallback || (f => setTimeout(f, 1200)))(() => loadChart());
 }
+
+/* ---- Chart.js loads on demand (it used to block the login screen) ---- */
+let chartLoading = null;
+function loadChart() {
+  if (window.Chart) return Promise.resolve(true);
+  if (chartLoading) return chartLoading;
+  chartLoading = new Promise(res => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js'; s.async = true;
+    s.onload = () => res(true);
+    s.onerror = () => { chartLoading = null; s.remove(); res(false); };   // falls back to the built-in bars
+    document.head.appendChild(s);
+  });
+  return chartLoading;
+}
+const wait = ms => new Promise(r => setTimeout(r, ms));
 
 /* =====================================================================
    3. ROUTER — role-aware navigation
@@ -385,15 +443,23 @@ function listView(host, o) {
     </div><div class="lv-body"></div>`;
   const body = $('.lv-body', host);
   const query = extra => Object.assign({ entity: o.entity, page: st.page, q: st.q, filters: st.filters, from: st.from, to: st.to }, extra || {});
+  let seq = 0;
+  function show(r, quiet) {
+    st.rows = r.rows;
+    body.classList.toggle('quiet', !!quiet);
+    if (!r.rows.length) { body.innerHTML = emptyBox('No records found', st.q || st.from || st.to || Object.keys(st.filters).some(k => st.filters[k]) ? 'Try a different search or filter.' : (o.onAdd ? 'Use the button above to add the first one.' : '')); return; }
+    const pages = Math.ceil(r.total / r.pageSize) || 1;
+    body.innerHTML = tableHtml(o.cols.filter(c => !c.csvOnly), r.rows, o.actions) + `<div class="pager"><button class="btn btn-ghost" type="button" data-p="-1" ${r.page <= 1 ? 'disabled' : ''}>${ic('chevron-left')}Previous</button><span class="muted">Page ${r.page} of ${pages} · ${r.total} records</span><button class="btn btn-ghost" type="button" data-p="1" ${r.page >= pages ? 'disabled' : ''}>Next${ic('chevron-right')}</button></div>`;
+  }
   async function load() {
-    body.innerHTML = skeleton();
+    const my = ++seq, q = query(), hit = cached('list', q);
+    if (hit) show(hit); else body.innerHTML = skeleton();        // recent data → shown instantly
     try {
-      const r = await api('list', query());
-      st.rows = r.rows;
-      if (!r.rows.length) { body.innerHTML = emptyBox('No records found', st.q || st.from || st.to || Object.keys(st.filters).some(k => st.filters[k]) ? 'Try a different search or filter.' : (o.onAdd ? 'Use the button above to add the first one.' : '')); return; }
-      const pages = Math.ceil(r.total / r.pageSize) || 1;
-      body.innerHTML = tableHtml(o.cols.filter(c => !c.csvOnly), r.rows, o.actions) + `<div class="pager"><button class="btn btn-ghost" type="button" data-p="-1" ${r.page <= 1 ? 'disabled' : ''}>${ic('chevron-left')}Previous</button><span class="muted">Page ${r.page} of ${pages} · ${r.total} records</span><button class="btn btn-ghost" type="button" data-p="1" ${r.page >= pages ? 'disabled' : ''}>Next${ic('chevron-right')}</button></div>`;
-    } catch (e) { body.innerHTML = errorBox(e.message); }
+      const r = await api('list', q);
+      if (my !== seq || !host.isConnected) return;               // a newer search / page already started
+      if (hit && JSON.stringify(hit) === JSON.stringify(r)) return;
+      show(r, !!hit);
+    } catch (e) { if (my === seq && !hit) body.innerHTML = errorBox(e.message); }
   }
   body.addEventListener('click', e => {
     if (e.target.closest('[data-retry]')) return load();
@@ -451,9 +517,21 @@ function countUp(root) {
   });
 }
 VIEWS.dashboard = async page => {
-  page.innerHTML = skeleton(5);
+  // Show the last dashboard instantly (if recent), then refresh it quietly
+  const hit = cached('dashboard');
+  if (hit) renderDash(page, hit); else page.innerHTML = skeleton(5);
+  const chartReady = loadChart();
   let d;
-  try { d = await api('dashboard'); } catch (e) { page.innerHTML = errorBox(e.message); $('[data-retry]', page).onclick = () => VIEWS.dashboard(page); return; }
+  try { d = await api('dashboard'); } catch (e) {
+    if (hit) return;                                      // keep showing the last figures
+    page.innerHTML = errorBox(e.message); $('[data-retry]', page).onclick = () => VIEWS.dashboard(page); return;
+  }
+  if (location.hash.slice(1) !== 'dashboard' || !page.isConnected) return;   // user moved to another page
+  if (hit && JSON.stringify(hit) === JSON.stringify(d)) return;             // nothing changed
+  if (!window.Chart) await Promise.race([chartReady, wait(1500)]);
+  renderDash(page, d, !!hit);
+};
+function renderDash(page, d, quiet) {
   S.pending = d.pending; buildNav();
   if (dashChart) { dashChart.destroy(); dashChart = null; }
   const kpi = (icon, label, value, sub, link, fmt) => `<div class="kpi ${link ? 'link' : ''}" ${link ? `data-go="${link}"` : ''}><span class="kpi-ic">${ic(icon)}</span><div class="k-label">${esc(label)}</div><div class="k-value" data-count="${Number(value) || 0}" data-fmt="${fmt || 'int'}">${esc(fmt === 'money' ? money(value) : value)}</div>${sub ? `<div class="k-sub">${esc(sub)}</div>` : ''}</div>`;
@@ -501,16 +579,16 @@ VIEWS.dashboard = async page => {
       Chart.defaults.font.family = "'Inter', system-ui, sans-serif"; Chart.defaults.color = '#6e6c85';
       dashChart = new Chart(cv, {
         type: 'bar',
-        data: { labels: d.months.map(m => monthLabel(m.month)), datasets: [{ data: d.months.map(m => m.amount), backgroundColor: '#635bff', hoverBackgroundColor: '#4b45d6', borderRadius: 7, maxBarThickness: 40 }] },
+        data: { labels: d.months.map(m => monthLabel(m.month)), datasets: [{ data: d.months.map(m => m.amount), backgroundColor: '#5b4cf0', hoverBackgroundColor: '#4636d8', borderRadius: 8, maxBarThickness: 40 }] },
         options: { responsive: true, maintainAspectRatio: false, animation: { duration: 700 },
           plugins: { legend: { display: false }, tooltip: { displayColors: false, padding: 10, callbacks: { label: c => money(c.parsed.y) } } },
           scales: { x: { grid: { display: false }, border: { display: false } }, y: { beginAtZero: true, border: { display: false }, grid: { color: '#eceef5' }, ticks: { maxTicksLimit: 5, callback: v => compact(v) } } } }
       });
     }
   }
-  countUp(page);
+  if (quiet) page.classList.add('quiet'); else { page.classList.remove('quiet'); countUp(page); }
   $$('[data-go]', page).forEach(el => { if (el.dataset.go) el.onclick = () => { location.hash = el.dataset.go; }; });
-};
+}
 
 /* ---------------- Project & locations ---------------- */
 VIEWS.project = page => {
@@ -971,6 +1049,19 @@ function changePin() {
     onSubmit: async v => { await api('changePin', { oldPin: v.oldPin, newPin: v.newPin }); toast('PIN changed'); }
   });
 }
+/* ---- Touch feedback: soft ripple on buttons & tabs ---- */
+document.addEventListener('pointerdown', e => {
+  if (e.button !== 0 || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+  const b = e.target.closest('.btn, .tab, .side-btn, .btn-link, .icon-btn');
+  if (!b || b.disabled) return;
+  const r = b.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2;
+  const i = document.createElement('i');
+  i.className = 'ripple';
+  i.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d / 2}px;top:${e.clientY - r.top - d / 2}px`;
+  b.appendChild(i);
+  setTimeout(() => i.remove(), 650);
+}, { passive: true });
+
 document.addEventListener('DOMContentLoaded', () => {
   document.title = CONFIG.APP_NAME;
   $('#pinBtn').innerHTML = ic('key-round') + 'Change PIN';
